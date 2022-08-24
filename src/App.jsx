@@ -11,11 +11,7 @@ function App() {
   const [results, setResults] = useState([])
   const [location, setLocation] = useLocation();
 
-  useEffect(() => {
-    if (location === "/") {
-      setLocation("/home");
-    }
-  })
+
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -66,7 +62,7 @@ function App() {
           Submit
         </button>
       </form>
-      <Route path="/home">
+      <Route path="/">
         <ul>{resultDisplay}</ul>
       </Route>
 
