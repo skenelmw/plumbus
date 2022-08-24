@@ -24,11 +24,16 @@ function App() {
     })
   }
 
+  function checkId(object, params) {
+    return object.id === parseInt(params.id)
+  }
+
   function handleTextChange(e) {
     setSearch(e.target.value);
   }
 
   let resultDisplay;
+
   if (results.length !== 0) {
     resultDisplay = results.map(results =>
       <li
@@ -66,13 +71,10 @@ function App() {
         <ul>{resultDisplay}</ul>
       </Route>
 
-      <Route path="/:searchType/:id">
+      {/* <Route path="/:searchType/:id">
         {params => {
           // IDEA: can i put the search type in the route path so the search type is passed in props?
           let componentToDisplay
-          function checkId(object) {
-            return object.id === parseInt(params.id)
-          }
           const [selected] = results.filter(checkId)
           if (!selected) {
             componentToDisplay = 404
@@ -83,11 +85,39 @@ function App() {
           return (
             <div>
               {componentToDisplay}
-              <button onClick={() => setLocation("/home")}>Back</button>
+              <button onClick={() => setLocation("/")}>Back</button>
             </div>
           )
         }}
+      </Route> */}
+      <Route path="/character/:id">
+        {params => {
+          const [selected] = results.filter((result) => checkId(result, params))
+          return (
+          <CharacterInfo info={selected} />
+          )
+        }}
       </Route>
+
+      <Route path="/location/:id">
+        {params => {
+          const [selected] = results.filter((result) => checkId(result, params))
+          return (
+          <LocationInfo info={selected} />
+          )
+        }}
+      </Route>
+
+      <Route path="/episode/:id">
+        {params => {
+          const [selected] = results.filter((result) => checkId(result, params))
+          return (
+          <EpisodeInfo info={selected} />
+          )
+        }}
+      </Route>
+      
+      
     </div>
   )
 }
