@@ -1,7 +1,7 @@
 import React from "react";
 
 const EpisodeInfo = (props) => {
-    const { name, air_date, episode } = props.info
+    const { name, air_date, episode, characters } = props.info
 
     console.log(props)
     return (
