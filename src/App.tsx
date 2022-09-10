@@ -6,30 +6,89 @@ import LocationInfo from './LocationInfo';
 import EpisodeInfo from './EpisodeInfo';
 
 function App() {
-  const [searchType, setSearchType] = useState("")
-  const [search, setSearch] = useState("")
-  const [results, setResults] = useState([])
+
+  type InfoData = {
+    count?: number
+    pages?: number
+    next?: string
+    prev?: string
+  }
+
+  type ResultsData = {
+    id: number
+    name: string
+  }
+
+  type LocationLink = {
+    name: string
+      url: string
+  }
+
+  type CharacterData = ResultsData & {
+    location: LocationLink
+    status: string
+    species: string
+    image: string
+    origin: LocationLink
+  }
+
+  type LocationData = ResultsData & {
+    type: string
+    dimension: string
+    residents: string[]
+  }
+
+  type EpisodeData = ResultsData & {
+    air_date: string
+    episode: string
+    characters: string[]
+  }
+
+  const [searchType, setSearchType] = useState<string>("")
+  const [search, setSearch] = useState<string>("")
+  const [results, setResults] = useState<Array<CharacterData | LocationData | EpisodeData>>([])
+  const [info, setInfo] = useState<InfoData>({})
+  // give count, prev and next their own state
   const [location, setLocation] = useLocation();
 
-
-
-  const handleSearch = (e) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     fetch("https://rickandmortyapi.com/api/" + searchType + "/?name=" + search)
     .then(res => {
       return res.json();
     })
     .then(res => {
-      setResults(res.results)
+      setResults(res.results);
+      console.log(res.info);
+      setInfo((prevState) => ({
+        ...prevState,
+        count: res.info.count,
+        pages: res.info.pages,
+        next: res.info.next,
+        prev: res.info.prev
+      }));
+      console.log(info);
     })
   }
 
-  function checkId(object, params) {
-    return object.id === parseInt(params.id)
+  function checkId(selected: CharacterData | LocationData | EpisodeData, paramId: string) {
+    return selected.id === parseInt(paramId)
   }
 
-  function handleTextChange(e) {
+  function handleTextChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSearch(e.target.value);
+  }
+
+  let infoDisplay;
+
+  if (info.count) {
+    infoDisplay = (
+      <div>
+        <p>Results found: {info.count}</p>
+        <button disabled={info.prev === null}>Previous Page</button>
+        <button disabled={info.next === null}>Next Page</button>
+      </div>
+    )
   }
 
   let resultDisplay;
@@ -44,14 +103,17 @@ function App() {
     );
   }
 
-  const searchTypeOnClick = (e) => {
-    setSearchType(e.target.name);
+  const searchTypeOnClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    setSearchType(e.currentTarget.name);
+    // THIS NEEDS TO CHANGE IN LINE WITH CHANGES TO STATE STRUCTURE
     setResults([]);
+  
   }
 
   return (
     <div className="App">
-      <h1>Welcome to a search engine for the Rick and Morty API! Please select what you want to search for.</h1>
+      <h1>Welcome to a search engine for the Rick and Morty API! </h1>
+      <h2>Please select what you want to search for.</h2>
       <button name="character" onClick={searchTypeOnClick}>
         A Character
       </button>
@@ -92,7 +154,7 @@ function App() {
       </Route> */}
       <Route path="/character/:id">
         {params => {
-          const [selected] = results.filter((result) => checkId(result, params))
+          const [selected] = results.filter((result) => checkId(result, params.id))
           return (
           <CharacterInfo info={selected} />
           )
@@ -101,7 +163,7 @@ function App() {
 
       <Route path="/location/:id">
         {params => {
-          const [selected] = results.filter((result) => checkId(result, params))
+          const [selected] = results.filter((result) => checkId(result, params.id))
           return (
           <LocationInfo info={selected} />
           )
@@ -110,7 +172,7 @@ function App() {
 
       <Route path="/episode/:id">
         {params => {
-          const [selected] = results.filter((result) => checkId(result, params))
+          const [selected] = results.filter((result) => checkId(result, params.id))
           return (
           <EpisodeInfo info={selected} />
           )
