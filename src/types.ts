@@ -1,4 +1,4 @@
-import { string, z } from "zod";
+import { z } from "zod";
 
 export const ResultDataParser = z.object({
   id: z.number(),
@@ -18,6 +18,12 @@ export const CharacterDataParser = ResultDataParser.extend({
   origin: LocationLinkParser,
 });
 
+export const SearchTypeParser = z
+  .enum(["character", "location", "episode"])
+  .nullable();
+
+export type SearchType = z.infer<typeof SearchTypeParser>;
+
 export type CharacterData = z.infer<typeof CharacterDataParser>;
 
 export const LocationDataParser = ResultDataParser.extend({
@@ -36,34 +42,18 @@ export const EpisodeDataParser = ResultDataParser.extend({
 
 export type EpisodeData = z.infer<typeof EpisodeDataParser>;
 
-
-export const ResultsParser = z.object({
-  info: z.object({
-    count: z.number(),
-    pages: z.number(),
-    next: z.string(),
-    prev: z.string(),
-  }),
-  results: z.array(z.union([CharacterDataParser, LocationDataParser, EpisodeDataParser])),
+export const ResultsInfoParser = z.object({
+  count: z.number(),
+  pages: z.number(),
+  next: z.string().nullable(),
+  prev: z.string().nullable(), // these can be null where you are at the start or end of the list
 });
 
-export type ResultsData = {
-  id: number;
-  name: string;
-};
+export type ResultsInfo = z.infer<typeof ResultsInfoParser>;
 
-export type InfoData = {
-  count?: number;
-  pages?: number;
-  next?: string;
-  prev?: string;
-};
-
-export type LocationLink = {
-  name: string;
-  url: string;
-};
-
-
-
-
+export const ResultsParser = z.object({
+  info: ResultsInfoParser,
+  results: z.array(
+    z.union([CharacterDataParser, LocationDataParser, EpisodeDataParser])
+  ),
+});
