@@ -1,29 +1,36 @@
-import { useEffect, useState } from "react";
-import { useRoute, useLocation, Route } from "wouter";
+import { useState } from "react";
+import { useLocation, Route } from "wouter";
 import "./App.css";
 import CharacterInfo from "./CharacterInfo";
 import LocationInfo from "./LocationInfo";
 import EpisodeInfo from "./EpisodeInfo";
 import {
-  InfoData,
-  ResultsData,
-  LocationLink,
   CharacterData,
   LocationData,
   EpisodeData,
   LocationDataParser,
   EpisodeDataParser,
   CharacterDataParser,
+  SearchType,
+  SearchTypeParser,
+  ResultsInfo,
 } from "./types";
 import { ResultsParser } from "./types";
 
 function App() {
-  const [searchType, setSearchType] = useState<string>("");
+  // let's set the type of searchType to be limited to the string values we are expecting
+  const [searchType, setSearchType] = useState<SearchType>(null);
   const [search, setSearch] = useState<string>("");
   const [results, setResults] = useState<
     Array<CharacterData | LocationData | EpisodeData>
   >([]);
-  const [info, setInfo] = useState<InfoData>({});
+  // swapped this to use a parser type rather than our hand-written type, need to instantiate it with valid initial values
+  const [info, setInfo] = useState<ResultsInfo>({
+    count: 0,
+    pages: 0,
+    next: null,
+    prev: null,
+  });
   // give count, prev and next their own state
   const [location, setLocation] = useLocation();
 
@@ -34,16 +41,15 @@ function App() {
         return res.json();
       })
       .then((res) => {
-        // TODO: handle error
-        const parsedData = ResultsParser.parse(res);
-        setResults(parsedData.results);
+        // TODO: handle error where parser fails
+        const { results, info } = ResultsParser.parse(res); // we are getting the two fields results and info from the parsed API response
+
         setInfo((prevState) => ({
           ...prevState,
-          count: parsedData.info.count,
-          pages: parsedData.info.pages,
-          next: parsedData.info.next,
-          prev: parsedData.info.prev,
+          ...info, // ... means "blow up" or destructure the info object so that we get all its properties in the new object
         }));
+
+        setResults(results);
       });
   };
 
@@ -83,7 +89,11 @@ function App() {
   }
 
   const searchTypeOnClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    setSearchType(e.currentTarget.name);
+    // we need to tell typescript that the value of e.currentTarget.value is a SearchType
+    const typeToSet = SearchTypeParser.parse(e.currentTarget.name);
+
+    console.log(typeToSet);
+    setSearchType(typeToSet);
     // THIS NEEDS TO CHANGE IN LINE WITH CHANGES TO STATE STRUCTURE
     setResults([]);
   };
@@ -103,58 +113,29 @@ function App() {
       </button>
       <form onSubmit={handleSearch}>
         <input type="text" value={search} onChange={handleTextChange} />
-        <button disabled={searchType === ""}>Submit</button>
+        <button disabled={!searchType}>Submit</button>
       </form>
       <Route path="/">
         <ul>{resultDisplay}</ul>
       </Route>
 
-      {/* <Route path="/:searchType/:id">
-        {params => {
-          // IDEA: can i put the search type in the route path so the search type is passed in props?
-          let componentToDisplay
-          const [selected] = results.filter(checkId)
-          if (!selected) {
-            componentToDisplay = 404
-          } else if (params.searchType === "character") { componentToDisplay = <CharacterInfo info={selected} /> }
-          else if (params.searchType === "location") { componentToDisplay = <LocationInfo info={selected} /> }
-          else if (params.searchType === "episode") { componentToDisplay = <EpisodeInfo info={selected} /> }
-
-          return (
-            <div>
-              {componentToDisplay}
-              <button onClick={() => setLocation("/")}>Back</button>
-            </div>
-          )
-        }}
-      </Route> */}
-      <Route path="/character/:id">
+      {/* THIS IS NOW ONE ROUTE USING SEARCH TYPE */}
+      <Route path={`/${searchType}/:id`}>
         {(params) => {
           const [selected] = results.filter((result) =>
             checkId(result, params.id)
           );
-          const characterData = CharacterDataParser.parse(selected);
-          return <CharacterInfo {...characterData} />;
-        }}
-      </Route>
-
-      <Route path="/location/:id">
-        {(params) => {
-          const [selected] = results.filter((result) =>
-            checkId(result, params.id)
-          );
-          const locationData = LocationDataParser.parse(selected);
-          return <LocationInfo {...locationData} />;
-        }}
-      </Route>
-
-      <Route path="/episode/:id">
-        {(params) => {
-          const [selected] = results.filter((result) =>
-            checkId(result, params.id)
-          );
-          const episodeData = EpisodeDataParser.parse(selected);
-          return <EpisodeInfo {...episodeData} />;
+          if (searchType === "character") {
+            // use the parsers to narrow the type
+            const character = CharacterDataParser.parse(selected);
+            return <CharacterInfo {...character} />;
+          } else if (searchType === "episode") {
+            const episode = EpisodeDataParser.parse(selected);
+            return <EpisodeInfo {...episode} />;
+          } else if (searchType === "location") {
+            const location = LocationDataParser.parse(selected);
+            return <LocationInfo {...location} />;
+          }
         }}
       </Route>
     </div>

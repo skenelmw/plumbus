@@ -1,19 +1,23 @@
-import React from "react";
+import { CharacterData } from "./types";
 
-const CharacterInfo = (props) => {
-    const { name, status, location, species, image, origin } = props.info
+const CharacterInfo = ({
+  name,
+  status,
+  location,
+  species,
+  image,
+  origin,
+}: CharacterData) => {
+  return (
+    <div>
+      <p>Name: {name}</p>
+      <img src={image} />
+      <p>Species: {species}</p>
+      <p>Location: {location.name}</p>
+      <p>Origin: {origin.name}</p>
+      <p>Alive: {status}</p>
+    </div>
+  );
+};
 
-    console.log(props)
-    return (
-        <div>
-            <p>Name: {name}</p>
-            <img src={image} />
-            <p>Species: {species}</p>
-            <p>Location: {location.name}</p>
-            <p>Origin: {origin.name}</p>
-            <p>Alive: {status}</p>
-        </div>
-    )
-}
-
-export default CharacterInfo
+export default CharacterInfo;
