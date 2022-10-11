@@ -38,6 +38,9 @@ function App() {
     e.preventDefault();
     fetch("https://rickandmortyapi.com/api/" + searchType + "/?name=" + search)
       .then((res) => {
+        if (!res.ok) {
+          throw new Error('api response was bad')
+        }
         return res.json();
       })
       .then((res) => {
@@ -50,6 +53,9 @@ function App() {
         }));
 
         setResults(results);
+      })
+      .catch((error) => {
+        console.error('fetch rquest failed', error);
       });
   };
 
@@ -67,10 +73,12 @@ function App() {
   const pageScroll = (url: string) => {
     fetch(url)
       .then((res) => {
+        if (!res.ok) {
+          throw new Error('api response was bad')
+        }
         return res.json();
       })
       .then((res) => {
-        // TODO: handle error where parser fails
         const { results, info } = ResultsParser.parse(res);
 
         setInfo((prevState) => ({
@@ -79,6 +87,9 @@ function App() {
         }));
 
         setResults(results);
+      })
+      .catch((error) => {
+        console.error('fetch rquest failed', error);
       });
   }
   
