@@ -64,14 +64,32 @@ function App() {
     setSearch(e.target.value);
   }
 
+  const pageScroll = (url: string) => {
+    fetch(url)
+      .then((res) => {
+        return res.json();
+      })
+      .then((res) => {
+        // TODO: handle error where parser fails
+        const { results, info } = ResultsParser.parse(res);
+
+        setInfo((prevState) => ({
+          ...prevState,
+          ...info,
+        }));
+
+        setResults(results);
+      });
+  }
+  
   let infoDisplay;
 
   if (info.count) {
     infoDisplay = (
       <div>
         <p>Results found: {info.count}</p>
-        <button disabled={info.prev === null}>Previous Page</button>
-        <button disabled={info.next === null}>Next Page</button>
+        <button name="prev" disabled={info.prev === null} onClick={() =>pageScroll(info.prev!)}>Previous Page</button>
+        <button name="next" disabled={info.next === null} onClick={() =>pageScroll(info.next!)}>Next Page</button>
       </div>
     );
   }
@@ -96,6 +114,13 @@ function App() {
     setSearchType(typeToSet);
     // THIS NEEDS TO CHANGE IN LINE WITH CHANGES TO STATE STRUCTURE
     setResults([]);
+    setInfo((prevState) => ({
+      ...prevState,
+      count: 0,
+      pages: 0,
+      next: null,
+      prev: null,
+    }));
   };
 
   return (
@@ -116,6 +141,7 @@ function App() {
         <button disabled={!searchType}>Submit</button>
       </form>
       <Route path="/">
+        {infoDisplay}
         <ul>{resultDisplay}</ul>
       </Route>
 
